@@ -22,17 +22,19 @@ type envStruct struct {
 	TelegramBotToken string `mapstructure:"TELEGRAM_BOT_TOKEN" json:"TELEGRAM_BOT_TOKEN"`
 	TelegramToChatid int64  `mapstructure:"TELEGRAM_TO_CHATID" json:"TELEGRAM_TO_CHATID"`
 
-	ListenGuildChannelIds    []string `mapstructure:"LISTEN_GUILD_CHANNEL_IDS" json:"LISTEN_GUILD_CHANNEL_IDS"`
-	ListenUserIds            []string `mapstructure:"LISTEN_USER_IDS" json:"LISTEN_USER_IDS"`
-	BlacklistGuildChannelIds []string `mapstructure:"BLACKLIST_GUILD_CHANNEL_IDS" json:"BLACKLIST_GUILD_CHANNEL_IDS"`
+	ListenGuildChannelIds        []string `mapstructure:"LISTEN_GUILD_CHANNEL_IDS" json:"LISTEN_GUILD_CHANNEL_IDS"`
+	ListenUserIds                []string `mapstructure:"LISTEN_USER_IDS" json:"LISTEN_USER_IDS"`
+	BlacklistGuildChannelIds     []string `mapstructure:"BLACKLIST_GUILD_CHANNEL_IDS" json:"BLACKLIST_GUILD_CHANNEL_IDS"`
+	ListenWebHookGuildChannelIds []string `mapstructure:"LISTEN_WEBHOOK_GUILD_CHANNEL_IDS" json:"LISTEN_WEBHOOK_GUILD_CHANNEL_IDS"`
 }
 
 var (
-	env                              envStruct
-	bot                              *tgbotapi.BotAPI
-	dg                               *discordgo.Session
-	ListenGuildChannelIdsMapSlice    map[string][]string
-	BlacklistGuildChannelIdsMapSlice map[string][]string
+	env                                  envStruct
+	bot                                  *tgbotapi.BotAPI
+	dg                                   *discordgo.Session
+	ListenGuildChannelIdsMapSlice        map[string][]string
+	BlacklistGuildChannelIdsMapSlice     map[string][]string
+	ListenWebHookGuildChannelIdsMapSlice map[string][]string
 )
 
 func main() {
@@ -90,6 +92,17 @@ func run(c *cli.Context) {
 
 		if len(vals) == 2 {
 			ListenGuildChannelIdsMapSlice[vals[0]] = append(ListenGuildChannelIdsMapSlice[vals[0]], vals[1])
+		}
+	}
+
+	// WebHook監聽名單
+	ListenWebHookGuildChannelIdsMapSlice = make(map[string][]string)
+
+	for _, val := range env.ListenWebHookGuildChannelIds {
+		vals := strings.Split(val, ":")
+
+		if len(vals) == 2 {
+			ListenWebHookGuildChannelIdsMapSlice[vals[0]] = append(ListenWebHookGuildChannelIdsMapSlice[vals[0]], vals[1])
 		}
 	}
 
@@ -212,6 +225,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// 如果在監控名單才會傳送給TG
 	isSendBot := checkIdExist(env.ListenUserIds, m.Author.ID) || (exist && checkIdExist(channelIds, m.ChannelID))
 
+	channelIds, exist = ListenWebHookGuildChannelIdsMapSlice[m.GuildID]
+	// 如果在監控名單才會調用webhook
+	isWebHook := (exist && checkIdExist(channelIds, m.ChannelID))
+
 	msg := ""
 
 	msglog := fmt.Sprintf("\nuser id: %s \nuser name: %s \n",
@@ -225,13 +242,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		channel := getChannel(guild.Channels, m.ChannelID)
 
 		if channel != nil {
-			if isSendBot {
-				msg += fmt.Sprintf("名字:  %s \n群組:  %s \n頻道:  %s \n",
-					m.Author.Username,
-					guild.Name,
-					channel.Name,
-				)
-			}
+			msg += fmt.Sprintf("名字:  %s \n群組:  %s \n頻道:  %s \n",
+				m.Author.Username,
+				guild.Name,
+				channel.Name,
+			)
 
 			msglog += fmt.Sprintf("guild id: %s \nguild name: %s \nchannel id: %s \nchannel name: %s \n",
 				m.GuildID,
@@ -242,97 +257,63 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 	}
 
-	if isSendBot {
-		msg += fmt.Sprintf("內容:\n%s \n", m.Content)
-	}
-
-	msglog += fmt.Sprintf("內容:\n%s \n", m.Content)
+	msg += fmt.Sprintf("內容:\n%s \n", m.Content)
 
 	for _, attachment := range m.Attachments {
-		if isSendBot {
-			msg += fmt.Sprintf("附件:\n%s \n", attachment.URL)
-		}
+		msg += fmt.Sprintf("附件:\n%s \n", attachment.URL)
 
-		msglog += fmt.Sprintf("附件:\n%s \n", attachment.URL)
 	}
 
 	// 處理Embeds
 	for _, embed := range m.Embeds {
 		if embed.URL != "" {
-			if isSendBot {
-				msg += fmt.Sprintf("Embed URL: %s \n", embed.URL)
-			}
+			msg += fmt.Sprintf("Embed URL: %s \n", embed.URL)
 
-			msglog += fmt.Sprintf("Embed: %s \n", embed.URL)
 		}
 
 		if embed.Title != "" {
-			if isSendBot {
-				msg += fmt.Sprintf("Embed Title: %s \n", embed.Title)
-			}
+			msg += fmt.Sprintf("Embed Title: %s \n", embed.Title)
 
-			msglog += fmt.Sprintf("Embed Title: %s \n", embed.Title)
 		}
 
 		if embed.Description != "" {
-			if isSendBot {
-				msg += fmt.Sprintf("Embed Description: %s \n", embed.Description)
-			}
+			msg += fmt.Sprintf("Embed Description: %s \n", embed.Description)
 
-			msglog += fmt.Sprintf("Embed Description: %s \n", embed.Description)
 		}
 
 		if embed.Image != nil {
-			if isSendBot {
-				msg += fmt.Sprintf("Embed Image URL: %s \n", embed.Image.URL)
-			}
+			msg += fmt.Sprintf("Embed Image URL: %s \n", embed.Image.URL)
 
-			msglog += fmt.Sprintf("Embed Image URL: %s \n", embed.Image.URL)
 		}
 
 		if embed.Video != nil {
-			if isSendBot {
-				msg += fmt.Sprintf("Embed Video URL: %s \n", embed.Video.URL)
-			}
+			msg += fmt.Sprintf("Embed Video URL: %s \n", embed.Video.URL)
 
-			msglog += fmt.Sprintf("Embed Video URL: %s \n", embed.Video.URL)
 		}
 
 		if embed.Provider != nil {
-			if isSendBot {
-				msg += fmt.Sprintf("Embed Provider URL: %s \n", embed.Provider.URL)
-			}
+			msg += fmt.Sprintf("Embed Provider URL: %s \n", embed.Provider.URL)
 
-			msglog += fmt.Sprintf("Embed Provider URL: %s \n", embed.Provider.URL)
 		}
 
 		if embed.Footer != nil {
-			if isSendBot {
-				msg += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
-			}
+			msg += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
 
-			msglog += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
 		}
 
 		if embed.Footer != nil {
-			if isSendBot {
-				msg += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
-			}
+			msg += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
 
-			msglog += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
 		}
 
 		for _, f := range embed.Fields {
-			if isSendBot {
-				msg += fmt.Sprintf("Embed Value Text: %s \n", f.Value)
-			}
+			msg += fmt.Sprintf("Embed Value Text: %s \n", f.Value)
 
-			msglog += fmt.Sprintf("Embed Value Text: %s \n", f.Value)
 		}
 	}
 
 	if env.DebugLog {
-		log.Println(msglog)
+		log.Println(msglog + msg)
 	}
 
 	if isSendBot {
@@ -353,6 +334,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		// msg = "```\n" + msg + "```"
 
 		botSendMsg(env.TelegramToChatid, 0, msg, tgbotapi.ModeMarkdownV2)
+	}
+
+	if isWebHook {
+		WebHook(msg)
 	}
 
 	// // If the message is "ping" reply with "Pong!"
