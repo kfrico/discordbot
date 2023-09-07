@@ -226,14 +226,14 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		if channel != nil {
 			if isSendBot {
-				msg = msg + fmt.Sprintf("名字:  %s \n群組:  %s \n頻道:  %s \n",
+				msg += fmt.Sprintf("名字:  %s \n群組:  %s \n頻道:  %s \n",
 					m.Author.Username,
 					guild.Name,
 					channel.Name,
 				)
 			}
 
-			msglog = msglog + fmt.Sprintf("guild id: %s \nguild name: %s \nchannel id: %s \nchannel name: %s \n",
+			msglog += fmt.Sprintf("guild id: %s \nguild name: %s \nchannel id: %s \nchannel name: %s \n",
 				m.GuildID,
 				guild.Name,
 				m.ChannelID,
@@ -243,82 +243,91 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	if isSendBot {
-		msg = msg + fmt.Sprintf("內容:\n%s \n", m.Content)
+		msg += fmt.Sprintf("內容:\n%s \n", m.Content)
 	}
 
-	msglog = msglog + fmt.Sprintf("內容:\n%s \n", m.Content)
+	msglog += fmt.Sprintf("內容:\n%s \n", m.Content)
 
 	for _, attachment := range m.Attachments {
 		if isSendBot {
-			msg = msg + fmt.Sprintf("附件:\n%s \n", attachment.URL)
+			msg += fmt.Sprintf("附件:\n%s \n", attachment.URL)
 		}
 
-		msglog = msglog + fmt.Sprintf("附件:\n%s \n", attachment.URL)
+		msglog += fmt.Sprintf("附件:\n%s \n", attachment.URL)
 	}
 
 	// 處理Embeds
 	for _, embed := range m.Embeds {
 		if embed.URL != "" {
 			if isSendBot {
-				msg = msg + fmt.Sprintf("Embed URL: %s \n", embed.URL)
+				msg += fmt.Sprintf("Embed URL: %s \n", embed.URL)
 			}
-			msglog = msglog + fmt.Sprintf("Embed: %s \n", embed.URL)
+
+			msglog += fmt.Sprintf("Embed: %s \n", embed.URL)
 		}
 
 		if embed.Title != "" {
 			if isSendBot {
-				msg = msg + fmt.Sprintf("Embed Title: %s \n", embed.Title)
+				msg += fmt.Sprintf("Embed Title: %s \n", embed.Title)
 			}
-			msglog = msglog + fmt.Sprintf("Embed Title: %s \n", embed.Title)
+
+			msglog += fmt.Sprintf("Embed Title: %s \n", embed.Title)
 		}
 
 		if embed.Description != "" {
 			if isSendBot {
-				msg = msg + fmt.Sprintf("Embed Description: %s \n", embed.Description)
+				msg += fmt.Sprintf("Embed Description: %s \n", embed.Description)
 			}
-			msglog = msglog + fmt.Sprintf("Embed Description: %s \n", embed.Description)
+
+			msglog += fmt.Sprintf("Embed Description: %s \n", embed.Description)
 		}
 
 		if embed.Image != nil {
 			if isSendBot {
-				msg = msg + fmt.Sprintf("Embed Image URL: %s \n", embed.Image.URL)
+				msg += fmt.Sprintf("Embed Image URL: %s \n", embed.Image.URL)
 			}
-			msglog = msglog + fmt.Sprintf("Embed Image URL: %s \n", embed.Image.URL)
+
+			msglog += fmt.Sprintf("Embed Image URL: %s \n", embed.Image.URL)
 		}
 
 		if embed.Video != nil {
 			if isSendBot {
-				msg = msg + fmt.Sprintf("Embed Video URL: %s \n", embed.Video.URL)
+				msg += fmt.Sprintf("Embed Video URL: %s \n", embed.Video.URL)
 			}
-			msglog = msglog + fmt.Sprintf("Embed Video URL: %s \n", embed.Video.URL)
+
+			msglog += fmt.Sprintf("Embed Video URL: %s \n", embed.Video.URL)
 		}
 
 		if embed.Provider != nil {
 			if isSendBot {
-				msg = msg + fmt.Sprintf("Embed Provider URL: %s \n", embed.Provider.URL)
+				msg += fmt.Sprintf("Embed Provider URL: %s \n", embed.Provider.URL)
 			}
-			msglog = msglog + fmt.Sprintf("Embed Provider URL: %s \n", embed.Provider.URL)
+
+			msglog += fmt.Sprintf("Embed Provider URL: %s \n", embed.Provider.URL)
 		}
 
 		if embed.Footer != nil {
 			if isSendBot {
-				msg = msg + fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
+				msg += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
 			}
-			msglog = msglog + fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
+
+			msglog += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
 		}
 
 		if embed.Footer != nil {
 			if isSendBot {
-				msg = msg + fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
+				msg += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
 			}
-			msglog = msglog + fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
+
+			msglog += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
 		}
 
 		for _, f := range embed.Fields {
 			if isSendBot {
-				msg = msg + fmt.Sprintf("Embed Value Text: %s \n", f.Value)
+				msg += fmt.Sprintf("Embed Value Text: %s \n", f.Value)
 			}
-			msglog = msglog + fmt.Sprintf("Embed Value Text: %s \n", f.Value)
+
+			msglog += fmt.Sprintf("Embed Value Text: %s \n", f.Value)
 		}
 	}
 
