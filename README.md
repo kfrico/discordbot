@@ -38,3 +38,8 @@ LISTEN_USER_IDS:
 ```
 ./dicord -c config.yaml
 ```
+
+### 查看所有群組頻道ID
+```
+./dicord -c config.yaml list
+```

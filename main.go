@@ -56,6 +56,23 @@ func main() {
 		},
 	}
 
+	app.Commands = []cli.Command{
+		{
+			Name:    "list",
+			Aliases: []string{"l"},
+			Usage:   "show channel list",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:   "config, c",
+					Value:  "config.yaml",
+					Usage:  "app config",
+					EnvVar: "CONFIG_PATH",
+				},
+			},
+			Action: list,
+		},
+	}
+
 	app.Action = run
 
 	err := app.Run(os.Args)
@@ -63,6 +80,56 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func list(c *cli.Context) error {
+	var err error
+
+	viper.SetConfigFile(c.String("config"))
+	viper.AutomaticEnv()
+
+	err = viper.ReadInConfig()
+
+	if err != nil {
+		return err
+	}
+
+	err = viper.Unmarshal(&env)
+
+	if err != nil {
+		return err
+	}
+
+	log.Println("ENV:", env)
+	log.Println("Cofing 設定成功")
+
+	dg, err = discordgo.New(env.DiscordToken)
+
+	if err != nil {
+		fmt.Println("error creating Discord session,", err)
+
+		return err
+	}
+
+	err = dg.Open()
+
+	if err != nil {
+		fmt.Println("error opening connection,", err)
+
+		return err
+	}
+
+	for _, guild := range dg.State.Guilds {
+		fmt.Printf("-> Guild %s (%s) \n", guild.Name, guild.ID)
+
+		for _, channel := range guild.Channels {
+			fmt.Printf("    -> Channel %s (%s) \n", channel.Name, channel.ID)
+		}
+	}
+
+	dg.Close()
+
+	return nil
 }
 
 func run(c *cli.Context) {
@@ -261,54 +328,44 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	for _, attachment := range m.Attachments {
 		msg += fmt.Sprintf("附件:\n%s \n", attachment.URL)
-
 	}
 
 	// 處理Embeds
 	for _, embed := range m.Embeds {
 		if embed.URL != "" {
 			msg += fmt.Sprintf("Embed URL: %s \n", embed.URL)
-
 		}
 
 		if embed.Title != "" {
 			msg += fmt.Sprintf("Embed Title: %s \n", embed.Title)
-
 		}
 
 		if embed.Description != "" {
 			msg += fmt.Sprintf("Embed Description: %s \n", embed.Description)
-
 		}
 
 		if embed.Image != nil {
 			msg += fmt.Sprintf("Embed Image URL: %s \n", embed.Image.URL)
-
 		}
 
 		if embed.Video != nil {
 			msg += fmt.Sprintf("Embed Video URL: %s \n", embed.Video.URL)
-
 		}
 
 		if embed.Provider != nil {
 			msg += fmt.Sprintf("Embed Provider URL: %s \n", embed.Provider.URL)
-
 		}
 
 		if embed.Footer != nil {
 			msg += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
-
 		}
 
 		if embed.Footer != nil {
 			msg += fmt.Sprintf("Embed Footer Text: %s \n", embed.Footer.Text)
-
 		}
 
 		for _, f := range embed.Fields {
 			msg += fmt.Sprintf("Embed Value Text: %s \n", f.Value)
-
 		}
 	}
 
